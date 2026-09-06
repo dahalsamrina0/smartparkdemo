@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartPark - Parking Management System</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#1f2937}
+header{background:#111827;color:#fff;padding:16px 5%;display:flex;justify-content:space-between;align-items:center}
+.brand{font-size:22px;font-weight:700}.nav button,.btn{border:0;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:600}
+.nav button{background:transparent;color:#fff;margin-left:8px}.nav button:hover,.nav button.active{background:#374151}
+.container{max-width:1150px;margin:25px auto;padding:0 18px}.page{display:none}.page.active{display:block}
+.hero{background:linear-gradient(135deg,#1e3a8a,#0f766e);color:white;padding:42px;border-radius:18px;margin-bottom:22px}
+.hero h1{margin:0 0 10px;font-size:38px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.card{background:#fff;padding:20px;border-radius:14px;box-shadow:0 3px 12px #00000012}
+.stat{font-size:30px;font-weight:bold;color:#2563eb}.muted{color:#6b7280}
+h2{margin-top:0} input,select{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:8px;margin:6px 0 12px}
+.btn{background:#2563eb;color:#fff}.btn.green{background:#059669}.btn.red{background:#dc2626}.btn.gray{background:#4b5563}
+.lot{margin-top:12px;border-left:5px solid #2563eb}.slots{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:15px 0}
+.slot{padding:14px 5px;text-align:center;border-radius:8px;font-weight:bold}.available{background:#d1fae5;color:#065f46}.reserved{background:#fef3c7;color:#92400e}.occupied{background:#fee2e2;color:#991b1b}
+.pass{border:2px dashed #2563eb;padding:25px;border-radius:16px;background:white;max-width:600px;margin:auto}.pass h2{text-align:center;color:#2563eb}
+.table{width:100%;border-collapse:collapse;background:#fff}.table th,.table td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left}.badge{padding:5px 9px;border-radius:20px;font-size:12px;font-weight:bold;background:#dbeafe;color:#1d4ed8}
+.notice{padding:12px;background:#ecfdf5;border-left:4px solid #059669;border-radius:6px;margin:10px 0}
+@media(max-width:650px){.hero h1{font-size:28px}.slots{grid-template-columns:repeat(3,1fr)}header{flex-direction:column;gap:8px}.nav button{padding:7px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">🚗 SmartPark</div>
+  <div class="nav">
+    <button onclick="showPage('home')" class="active">Home</button>
+    <button onclick="showPage('book')">Book Parking</button>
+    <button onclick="showPage('admin')">Admin</button>
+    <button onclick="showPage('history')">History</button>
+  </div>
+</header>
+
+<div class="container">
+<section id="home" class="page active">
+ <div class="hero"><h1>Smart Parking Management System</h1><p>Find, reserve and manage parking spaces digitally.</p><button class="btn green" onclick="showPage('book')">Find Parking Now</button></div>
+ <div class="grid">
+  <div class="card"><div class="muted">Total Slots</div><div class="stat" id="totalSlots">20</div></div>
+  <div class="card"><div class="muted">Available</div><div class="stat" id="availableCount">0</div></div>
+  <div class="card"><div class="muted">Reserved</div><div class="stat" id="reservedCount">0</div></div>
+  <div class="card"><div class="muted">Occupied</div><div class="stat" id="occupiedCount">0</div></div>
+ </div>
+ <div class="card lot"><h2>📍 NCC Smart Parking</h2><p class="muted">Minbhawan, Kathmandu • Car & Bike Parking • Open 24/7</p><p><b>Rate:</b> Car NPR 50/hour | Bike NPR 20/hour</p></div>
+</section>
+
+<section id="book" class="page">
+ <div class="grid">
+  <div class="card">
+   <h2>Reserve a Parking Slot</h2>
+   <label>Your Name</label><input id="name" placeholder="Enter your name">
+   <label>Vehicle Number</label><input id="vehicle" placeholder="e.g. BA 2 PA 1234">
+   <label>Vehicle Type</label><select id="type" onchange="calculate()"><option>Car</option><option>Bike</option></select>
+   <label>Parking Duration (Hours)</label><input type="number" id="hours" value="1" min="1" onchange="calculate()">
+   <label>Select Available Slot</label><select id="slotSelect"></select>
+   <div class="notice" id="priceBox">Estimated Price: NPR 50</div>
+   <button class="btn green" onclick="bookSlot()">Confirm Reservation & Demo Payment</button>
+  </div>
+  <div class="card"><h2>Live Slot Status</h2><div class="slots" id="slotGrid"></div><p class="muted">🟢 Available &nbsp; 🟡 Reserved &nbsp; 🔴 Occupied</p></div>
+ </div>
+</section>
+
+<section id="passPage" class="page">
+ <div class="pass" id="digitalPass"></div>
+ <div style="text-align:center;margin-top:15px"><button class="btn" onclick="showPage('history')">View Parking History</button></div>
+</section>
+
+<section id="admin" class="page">
+ <div class="hero" style="padding:25px"><h1 style="font-size:28px">Admin Dashboard</h1><p>Monitor parking occupancy, entry/exit and revenue.</p></div>
+ <div class="grid">
+  <div class="card"><div class="muted">Today's Revenue</div><div class="stat" id="revenue">NPR 0</div></div>
+  <div class="card"><div class="muted">Total Reservations</div><div class="stat" id="reservationCount">0</div></div>
+  <div class="card"><div class="muted">Active Parking</div><div class="stat" id="activeCount">0</div></div>
+ </div>
+ <div class="card" style="margin-top:18px"><h2>Vehicle Entry / Exit Management</h2><div id="adminReservations"></div></div>
+ <div class="card" style="margin-top:18px"><button class="btn red" onclick="resetDemo()">Reset Demo Data</button></div>
+</section>
+
+<section id="history" class="page">
+ <div class="card"><h2>My Parking Reservations</h2><div id="historyTable"></div></div>
+</section>
+</div>
+
+<script>
+const defaultSlots = Array.from({length:20},(_,i)=>({number:(i<10?'A':'B')+'-'+String((i%10)+1).padStart(2,'0'),status:'available'}));
+let slots=JSON.parse(localStorage.getItem('smartpark_slots'))||defaultSlots;
+let reservations=JSON.parse(localStorage.getItem('smartpark_reservations'))||[];
+
+function save(){localStorage.setItem('smartpark_slots',JSON.stringify(slots));localStorage.setItem('smartpark_reservations',JSON.stringify(reservations))}
+function showPage(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));render()}
+function calculate(){let h=+document.getElementById('hours').value||1;let rate=document.getElementById('type').value==='Car'?50:20;document.getElementById('priceBox').innerHTML='<b>Estimated Price: NPR '+(h*rate)+'</b> ('+rate+'/hour)'}
+function render(){
+ const a=slots.filter(s=>s.status==='available').length,r=slots.filter(s=>s.status==='reserved').length,o=slots.filter(s=>s.status==='occupied').length;
+ document.getElementById('totalSlots').textContent=slots.length;document.getElementById('availableCount').textContent=a;document.getElementById('reservedCount').textContent=r;document.getElementById('occupiedCount').textContent=o;
+ const grid=document.getElementById('slotGrid');grid.innerHTML=slots.map(s=>`<div class="slot ${s.status}">${s.number}</div>`).join('');
+ const select=document.getElementById('slotSelect');select.innerHTML=slots.filter(s=>s.status==='available').map(s=>`<option>${s.number}</option>`).join('')||'<option>No slots available</option>';
+ const revenue=reservations.filter(x=>x.status==='completed'||x.status==='occupied').reduce((a,b)=>a+b.amount,0);document.getElementById('revenue').textContent='NPR '+revenue;
+ document.getElementById('reservationCount').textContent=reservations.length;document.getElementById('activeCount').textContent=reservations.filter(x=>x.status==='reserved'||x.status==='occupied').length;
+ const admin=document.getElementById('adminReservations');
+ admin.innerHTML=reservations.length?`<table class="table"><tr><th>User</th><th>Vehicle</th><th>Slot</th><th>Amount</th><th>Status</th><th>Action</th></tr>${reservations.map(x=>`<tr><td>${x.name}</td><td>${x.vehicle}</td><td>${x.slot}</td><td>NPR ${x.amount}</td><td><span class="badge">${x.status}</span></td><td>${x.status==='reserved'?`<button class="btn" onclick="entry(${x.id})">Vehicle Entry</button>`:x.status==='occupied'?`<button class="btn red" onclick="exitParking(${x.id})">Vehicle Exit</button>`:'Completed'}</td></tr>`).join('')}</table>`:'No reservations yet.';
+ document.getElementById('historyTable').innerHTML=reservations.length?`<table class="table"><tr><th>Vehicle</th><th>Slot</th><th>Duration</th><th>Amount</th><th>Status</th></tr>${reservations.map(x=>`<tr><td>${x.vehicle}</td><td>${x.slot}</td><td>${x.hours} hr</td><td>NPR ${x.amount}</td><td>${x.status}</td></tr>`).join('')}</table>`:'No parking history yet.';
+ calculate();
+}
+function bookSlot(){
+ let name=document.getElementById('name').value.trim(),vehicle=document.getElementById('vehicle').value.trim(),slot=document.getElementById('slotSelect').value,h=+document.getElementById('hours').value||1,type=document.getElementById('type').value;
+ if(!name||!vehicle||!slot){alert('Please enter your name, vehicle number and select a slot.');return}
+ let amount=h*(type==='Car'?50:20);let id=Date.now();
+ reservations.push({id,name,vehicle,slot,hours:h,type,amount,status:'reserved',time:new Date().toLocaleString()});slots.find(s=>s.number===slot).status='reserved';save();
+ document.getElementById('digitalPass').innerHTML=`<h2>🚗 SMARTPARK DIGITAL PASS</h2><hr><p><b>Reservation ID:</b> SP-${id}</p><p><b>Name:</b> ${name}</p><p><b>Vehicle:</b> ${vehicle} (${type})</p><p><b>Parking Lot:</b> NCC Smart Parking, Minbhawan</p><p><b>Slot:</b> ${slot}</p><p><b>Duration:</b> ${h} hour(s)</p><p><b>Amount Paid:</b> NPR ${amount}</p><p><b>Status:</b> RESERVED</p><hr><p class="muted">Demo Payment Successful • Show this pass at entry</p>`;
+ showPage('passPage');render();
+}
+function entry(id){let x=reservations.find(x=>x.id===id);x.status='occupied';x.entryTime=new Date().toLocaleTimeString();slots.find(s=>s.number===x.slot).status='occupied';save();render();alert('Vehicle Entry Successful: '+x.vehicle)}
+function exitParking(id){let x=reservations.find(x=>x.id===id);x.status='completed';x.exitTime=new Date().toLocaleTimeString();slots.find(s=>s.number===x.slot).status='available';save();render();alert('Vehicle Exit Successful. Final Bill: NPR '+x.amount)}
+function resetDemo(){if(confirm('Reset all demo data?')){localStorage.removeItem('smartpark_slots');localStorage.removeItem('smartpark_reservations');slots=JSON.parse(JSON.stringify(defaultSlots));reservations=[];render()}}
+render();
+</script>
+</body>
+</html>
